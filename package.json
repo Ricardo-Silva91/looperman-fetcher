@@ -1,0 +1,31 @@
+{
+  "name": "looperman-fetcher",
+  "version": "1.0.0",
+  "description": "selenium script for searching and downloading files from looperman",
+  "main": "index.js",
+  "scripts": {
+    "start": "node ./src/index.js",
+    "lint": "eslint --fix",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ricardo-Silva91/looperman-fetcher.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Ricardo-Silva91/looperman-fetcher/issues"
+  },
+  "homepage": "https://github.com/Ricardo-Silva91/looperman-fetcher#readme",
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "selenium-webdriver": "^4.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.2.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-import": "^2.25.3"
+  }
+}
