@@ -1,7 +1,24 @@
 const { until, By } = require('selenium-webdriver');
+const chrome = require('selenium-webdriver/chrome');
+const { Builder } = require('selenium-webdriver');
 
 const iterationWaitTime = 1000;
 const waitTimeout = 10000;
+
+const getDriver = async () => {
+  const options = new chrome.Options();
+  options.setBinaryPath(process.env.CHROME_PATH);
+
+  options.addArguments(`user-data-dir=${process.env.PROFILE_PATH}`);
+  options.addArguments(`profile-directory=${process.env.PROFLE_NAME}`);
+
+  const driver = await new Builder()
+    .forBrowser('chrome')
+    .setChromeOptions(options)
+    .build();
+
+  return driver;
+};
 
 const waitFor = async (timeToWait = iterationWaitTime) => new Promise((resolve) => {
   setTimeout(() => {
@@ -51,7 +68,26 @@ const checkForElement = async (driver, elementPath, times = 3) => {
   return false;
 };
 
+const getAllElements = async (driver, elementPath, times = 3) => {
+  for (let i = 0; i < times; i += 1) {
+    // eslint-disable-next-line no-await-in-loop
+    const elementArray = await driver.findElements(By.xpath(elementPath));
+
+    if (elementArray.length) {
+      return elementArray;
+    }
+
+    // eslint-disable-next-line no-await-in-loop
+    await waitFor();
+  }
+
+  return [];
+};
+
 module.exports = {
+  getDriver,
   checkForElement,
+  getAllElements,
   waitAndRepeat,
+  waitFor,
 };

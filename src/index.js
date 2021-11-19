@@ -1,46 +1,88 @@
+/* eslint-disable no-await-in-loop */
 const dotenv = require('dotenv');
-const chrome = require('selenium-webdriver/chrome');
-const { Builder } = require('selenium-webdriver');
-const { checkForElement } = require('./utils/driverUtils');
-const {
-  agreeButtonPath, loginButtonPath, usernameInputPath, passwordInputPath, disclaimerInputPath,
-} = require('./utils/elementPaths');
+const { waitFor, getDriver, checkForElement } = require('./utils/driverUtils');
+const { getItemsOnPage, filterItems, downloadItems } = require('./utils/itemUtils');
+const { moveFilesToDir, saveState } = require('./utils/fsUtils');
+const { dealWithCookiePolicy, dealWithLogin } = require('./utils/sessionUtils');
+const { pageSectionTitlePath } = require('./utils/elementPaths');
+const { allSavedItems } = require('../state');
 
 dotenv.config();
 
 (async function run() {
-  const options = new chrome.Options();
-  options.setBinaryPath(process.env.CHROME_PATH);
-  
-//   options.addArguments(`user-data-dir=${driverOptions.dataDir}`);
-//   options.addArguments(`profile-directory=${driverOptions.profile}`);
+  const driver = await getDriver();
 
-  const driver = await new Builder()
-    .forBrowser('chrome')
-    .setChromeOptions(options)
-    .build();
+  await driver.get(process.env.LANDING_URL);
 
-  await driver.get('https://www.looperman.com/loops?page=1&cid=1&when=3&order=date&dir=d');
+  await dealWithCookiePolicy(driver);
 
-  const agreeButton = await checkForElement(driver, agreeButtonPath);
+  await dealWithLogin(driver);
 
-  if (agreeButton) {
-    agreeButton.click();
+  const pagesUrls = process.env.PAGE_URLS.split(/, |,/);
+  const allItems = allSavedItems || {};
+  const savedKeys = Object.keys(allItems).length;
+
+  if (savedKeys) {
+    console.log('has saved items');
   }
 
-  const loginButton = await checkForElement(driver, loginButtonPath);
+  for (let i = 0; i < pagesUrls.length && !savedKeys; i += 1) {
+    const pageUrl = pagesUrls[i];
 
-  if (loginButton) {
-    loginButton.click();
+    await driver.get(pageUrl);
+
+    const sectionTitleElement = await checkForElement(driver, pageSectionTitlePath);
+    const sectionTitleAttribute = await sectionTitleElement.getAttribute('innerText');
+    const sectionTitle = sectionTitleAttribute.replace('Free', '').replace('Music Loops & Samples', '').trim().replace(/ /g, '-');
+
+    const items = await getItemsOnPage(driver);
+
+    const { goodies, maybes } = filterItems(items);
+
+    console.log({ sectionTitle, gl: goodies.length, ml: maybes.length });
+
+    allItems[sectionTitle] = { goodies, maybes };
   }
 
-  const usernameInput = await checkForElement(driver, usernameInputPath);
-  const passwordInput = await checkForElement(driver, passwordInputPath);
-  const disclaimerInput = await checkForElement(driver, disclaimerInputPath);
+  const keys = Object.keys(allItems);
 
-  if (usernameInput) {
-    usernameInput.sendKeys(process.env.LOOPERMAN_EMAIL);
-    passwordInput.sendKeys(process.env.LOOPERMAN_PASSWORD);
-    disclaimerInput.click();
+  for (let i = 0; i < keys.length; i += 1) {
+    const sectionTitle = keys[i];
+    const { goodies, maybes } = allItems[sectionTitle];
+    let donwloadLimitReachedStatus = {};
+
+    if (goodies.length) {
+      donwloadLimitReachedStatus = await downloadItems(driver, goodies);
+
+      if (donwloadLimitReachedStatus.donwloadLimitReached) {
+        allItems[sectionTitle].goodies = goodies.slice(donwloadLimitReachedStatus.currentIndex);
+        saveState(allItems);
+      }
+    }
+
+    if (maybes.length && !donwloadLimitReachedStatus.donwloadLimitReached) {
+      donwloadLimitReachedStatus = await downloadItems(driver, maybes);
+
+      if (donwloadLimitReachedStatus.donwloadLimitReached) {
+        allItems[sectionTitle].maybes = maybes.slice(donwloadLimitReachedStatus.currentIndex);
+        saveState(allItems);
+      }
+    }
+
+    await waitFor(10000);
+
+    await moveFilesToDir(maybes, process.env.MAYBES_PATH, sectionTitle);
+    // allItems[sectionTitle].maybes = maybes.filter((item) => !movedFiles.includes(item.id));
+
+    await moveFilesToDir(goodies, process.env.GOODIES_PATH, sectionTitle);
+    // allItems[sectionTitle].goodies = goodies.filter((item) => !movedFiles.includes(item.id));
+    // saveState(allItems);
+
+    if (donwloadLimitReachedStatus.donwloadLimitReached) {
+      driver.close();
+      return;
+    }
   }
+  saveState({});
+  driver.close();
 }());
