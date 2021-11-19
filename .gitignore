@@ -110,3 +110,4 @@ profiles/*
 data/goodies/*
 data/maybes/*
 data/triage/*
+state.js
