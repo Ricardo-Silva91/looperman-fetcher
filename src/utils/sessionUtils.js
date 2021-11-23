@@ -13,6 +13,35 @@ const {
 } = require('./elementPaths');
 
 const sessionUtils = {
+  checkEnvironment: () => {
+    const {
+      CHROME_PATH,
+      PROFILE_PATH,
+      PROFILE_NAME,
+      LANDING_URL,
+      GOODIES_PATH,
+      MAYBES_PATH,
+      TRIAGE_PATH,
+      PAGE_URLS,
+      LOOPERMAN_EMAIL,
+      LOOPERMAN_PASSWORD,
+    } = process.env;
+
+    if (!CHROME_PATH
+      || !PROFILE_PATH
+      || !PROFILE_NAME
+      || !LANDING_URL
+      || !GOODIES_PATH
+      || !MAYBES_PATH
+      || !TRIAGE_PATH
+      || !PAGE_URLS
+      || !LOOPERMAN_EMAIL
+      || !LOOPERMAN_PASSWORD) {
+      return false;
+    }
+
+    return true;
+  },
   dealWithCookiePolicy: async (driver) => {
     const agreeButton = await checkForElement(driver, agreeButtonPath);
 

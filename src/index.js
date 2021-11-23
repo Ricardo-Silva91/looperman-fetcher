@@ -3,7 +3,7 @@ const dotenv = require('dotenv');
 const { waitFor, getDriver, checkForElement } = require('./utils/driverUtils');
 const { getItemsOnPage, filterItems, downloadItems } = require('./utils/itemUtils');
 const { moveFilesToDir, saveState } = require('./utils/fsUtils');
-const { dealWithCookiePolicy, dealWithLogin } = require('./utils/sessionUtils');
+const { dealWithCookiePolicy, dealWithLogin, checkEnvironment } = require('./utils/sessionUtils');
 const { pageSectionTitlePath } = require('./utils/elementPaths');
 const { allSavedItems } = require('../state');
 
@@ -12,9 +12,20 @@ dotenv.config();
 (async function run() {
   const driver = await getDriver();
 
-  await driver.get(process.env.LANDING_URL);
+  await driver.get(process.env.LANDING_URL || 'https://www.looperman.com');
 
   await dealWithCookiePolicy(driver);
+
+  if (!process.env.TRIAGE_PATH) {
+    console.warn('please set the download directory and fill environment variable TRIAGE_PATH');
+    return;
+  }
+
+  if (!checkEnvironment()) {
+    console.error('please fill all the environment variables');
+    await driver.close();
+    return;
+  }
 
   await dealWithLogin(driver);
 
