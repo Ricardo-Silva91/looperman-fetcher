@@ -27,7 +27,7 @@ const getItemDataArray = async (items) => {
   return itemDataArray;
 };
 
-const downloadItem = async ({ page, item }) => {
+const downloadItem = async ({ page, item, category }) => {
   const { href, title, filename } = item;
 
   console.log({ href });
@@ -48,7 +48,11 @@ const downloadItem = async ({ page, item }) => {
 
   console.log({ downloadPath });
 
-  moveFile(downloadPath, path.join(process.env.TRIAGE_PATH, filename));
+  moveFile(
+    downloadPath,
+    path.join(process.env.TRIAGE_PATH, category, filename),
+    path.join(process.env.TRIAGE_PATH, category),
+);
 };
 
 module.exports = {

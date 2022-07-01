@@ -1,6 +1,7 @@
 const { test, expect } = require('@playwright/test');
 const dotenv = require('dotenv');
 const { getItemDataArray, downloadItem } = require('../utils/browser.utils');
+const { getTextOfElement } = require('../utils/playwright-helpers/utils/browser.utils');
 
 dotenv.config();
 
@@ -39,7 +40,9 @@ test('basic test', async ({ page }) => {
     // Click span[role="checkbox"]
     await page.frameLocator('iframe[role="presentation"]').locator('span[role="checkbox"]').click();
 
-    await page.waitForTimeout(5000);
+    const checkedBox = await page.frameLocator('iframe[role="presentation"]').locator('span[role="checkbox"].recaptcha-checkbox-checked');
+
+    await checkedBox.waitFor({ state: 'visible', timeout: 10000 });
 
     // Check input[name="user_disclaimer"]
     await page.locator('input[name="user_disclaimer"]').check();
@@ -49,30 +52,43 @@ test('basic test', async ({ page }) => {
     await expect(page).toHaveURL('https://www.looperman.com/');
   }
 
-  /**
-     * Go to list.
-     */
-  await page.goto('https://www.looperman.com/loops?page=1&cid=1&gid=65&when=3&dir=d');
+  const pages = process.env.PAGE_URLS.split(',');
 
-  const items = await page.locator('.jp-audio.jp-state-looped');
+  console.log({ pages });
 
-  try {
-    await items.first().waitFor({ state: 'visible', timeout: 3000 });
-  } catch (error) {
-    console.log('no items were found');
-  }
+  for (let i = 0; i < pages.length; i += 1) {
+    const currentUrl = pages[i];
 
-  const numberOfItems = await items.count();
+    /**
+       * Go to list.
+       */
+    await page.goto(currentUrl);
 
-  console.log({ numberOfItems });
+    const categoryFull = await getTextOfElement({ page, query: '.section-title' });
+    const category = categoryFull.replace('Free ', '').replace(' Drum Music Loops & Samples', '');
 
-  const itemDataArray = await getItemDataArray(items);
+    console.log({ category });
 
-  console.log({ itemDataArray, c: process.env.LOOPERMAN_EMAIL });
+    const items = await page.locator('.jp-audio.jp-state-looped');
 
-  for (let i = 0; i < itemDataArray.length; i += 1) {
-    const item = itemDataArray[i];
+    try {
+      await items.first().waitFor({ state: 'visible', timeout: 3000 });
+    } catch (error) {
+      console.log('no items were found');
+    }
 
-    await downloadItem({ page, item });
+    const numberOfItems = await items.count();
+
+    console.log({ numberOfItems });
+
+    const itemDataArray = await getItemDataArray(items);
+
+    console.log({ itemDataArray });
+
+    for (let j = 0; j < itemDataArray.length; j += 1) {
+      const item = itemDataArray[j];
+
+      await downloadItem({ page, item, category });
+    }
   }
 });
