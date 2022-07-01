@@ -1,7 +1,7 @@
 {
   "name": "looperman-fetcher",
   "version": "1.0.0",
-  "description": "selenium script for searching and downloading files from looperman",
+  "description": "playwright script for searching and downloading files from looperman",
   "main": "index.js",
   "scripts": {
     "start": "node ./src/index.js",
@@ -19,8 +19,7 @@
   },
   "homepage": "https://github.com/Ricardo-Silva91/looperman-fetcher#readme",
   "dependencies": {
-    "dotenv": "^10.0.0",
-    "selenium-webdriver": "^4.0.0"
+    "dotenv": "^10.0.0"
   },
   "devDependencies": {
     "eslint": "^8.2.0",
