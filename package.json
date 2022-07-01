@@ -8,7 +8,7 @@
     "lint": "eslint --fix",
     "fetch": "npx playwright test --headed",
     "playwright:init": "npx playwright install",
-    "playwright:codegen": "npx playwright codegen https://www.looperman.com/loops",
+    "playwright:codegen": "npx playwright codegen https://www.looperman.com/loops/detail/300169/0x97476064-free-165bpm-industrial-drum-loop",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

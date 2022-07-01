@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const dotenv = require('dotenv');
-const { getItemDataArray } = require('../utils/browser.utils');
+const { getItemDataArray, downloadItem } = require('../utils/browser.utils');
 
 dotenv.config();
 
@@ -22,7 +22,7 @@ test('basic test', async ({ page }) => {
   }
 
   // login
-  const shouldLogin = false;
+  const shouldLogin = true;
 
   if (shouldLogin) {
     // Click text=Log In
@@ -31,11 +31,11 @@ test('basic test', async ({ page }) => {
     // Click input[name="user_email"]
     await page.locator('input[name="user_email"]').click();
     // Fill input[name="user_email"]
-    await page.locator('input[name="user_email"]').fill('');
+    await page.locator('input[name="user_email"]').fill(process.env.LOOPERMAN_EMAIL);
     // Click input[name="upass"]
     await page.locator('input[name="upass"]').click();
     // Fill input[name="upass"]
-    await page.locator('input[name="upass"]').fill('');
+    await page.locator('input[name="upass"]').fill(process.env.LOOPERMAN_PASSWORD);
     // Click span[role="checkbox"]
     await page.frameLocator('iframe[role="presentation"]').locator('span[role="checkbox"]').click();
 
@@ -69,4 +69,10 @@ test('basic test', async ({ page }) => {
   const itemDataArray = await getItemDataArray(items);
 
   console.log({ itemDataArray, c: process.env.LOOPERMAN_EMAIL });
+
+  for (let i = 0; i < itemDataArray.length; i += 1) {
+    const item = itemDataArray[i];
+
+    await downloadItem({ page, item });
+  }
 });
