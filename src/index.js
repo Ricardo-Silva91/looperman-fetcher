@@ -4,4 +4,3 @@ const { allSavedItems } = require('../state');
 
 console.log({ allSavedItems });
 dotenv.config();
-
