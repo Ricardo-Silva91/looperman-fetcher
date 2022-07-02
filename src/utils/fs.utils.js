@@ -1,9 +1,13 @@
 const fs = require('fs');
 
-const moveFile = (src, dest, dir) => {
+const moveFile = (src, dest, neededDirs) => {
   if (fs.existsSync(src)) {
-    if (dir && !fs.existsSync(dir)) {
-      fs.mkdirSync(dir);
+    if (neededDirs && neededDirs.length) {
+      neededDirs.forEach((dir) => {
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir);
+        }
+      });
     }
 
     fs.renameSync(src, dest);

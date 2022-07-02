@@ -64,10 +64,19 @@ test('basic test', async ({ page }) => {
        */
     await page.goto(currentUrl);
 
-    const categoryFull = await getTextOfElement({ page, query: '.section-title' });
-    const category = categoryFull.replace('Free ', '').replace(' Drum Music Loops & Samples', '');
+    const genreFull = await getTextOfElement({ page, query: '.section-title' });
+    const genre = genreFull.replace('Free ', '').replace(' Drum Music Loops & Samples', '');
 
-    console.log({ category });
+    const categorySelect = await page.locator('select[name="cid"]');
+
+    categorySelect.waitFor({ state: 'visible' });
+
+    const categorySelectValue = await page.$eval('select[name="cid"]', (sel) => sel.value);
+    const category = await getTextOfElement({ page: categorySelect, query: `option[value="${categorySelectValue}"]` });
+
+    console.log({
+      genre, category,
+    });
 
     const items = await page.locator('.jp-audio.jp-state-looped');
 
@@ -88,7 +97,7 @@ test('basic test', async ({ page }) => {
     for (let j = 0; j < itemDataArray.length; j += 1) {
       const item = itemDataArray[j];
 
-      await downloadItem({ page, item, category });
+      await downloadItem({ page, item, category, genre });
     }
   }
 });
