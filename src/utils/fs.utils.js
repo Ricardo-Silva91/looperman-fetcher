@@ -16,6 +16,22 @@ const moveFile = (src, dest, neededDirs) => {
   }
 };
 
+const writeFile = (dest, data) => {
+  fs.writeFileSync(dest, JSON.stringify(data, null, 2));
+};
+
+const readFile = (src) => {
+  if (!fs.existsSync(src)) {
+    return null;
+  }
+
+  const data = fs.readFileSync(src);
+
+  return JSON.parse(data);
+};
+
 module.exports = {
   moveFile,
+  readFile,
+  writeFile,
 };

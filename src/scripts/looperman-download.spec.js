@@ -1,11 +1,12 @@
 const { test, expect } = require('@playwright/test');
 const dotenv = require('dotenv');
-const { getItemDataArray, downloadItem } = require('../utils/browser.utils');
-const { getTextOfElement } = require('../utils/playwright-helpers/utils/browser.utils');
+const path = require('path');
+const { downloadFromPages, downloadItem } = require('../utils/browser.utils');
+const { readFile, writeFile } = require('../utils/fs.utils');
 
 dotenv.config();
 
-test('basic test', async ({ page }) => {
+test('basic test', async ({ page, context }) => {
   // Go to https://www.looperman.com/loops
   await page.goto('https://www.looperman.com/loops');
 
@@ -52,52 +53,36 @@ test('basic test', async ({ page }) => {
     await expect(page).toHaveURL('https://www.looperman.com/');
   }
 
-  const pages = process.env.PAGE_URLS.split(',');
+  // let hitDailyLimit = false;
+  let savedItems = readFile(path.join(process.env.TRIAGE_PATH, '..', 'failedItems.json'));
 
-  console.log({ pages });
+  if (savedItems !== null && savedItems.length) {
+    console.log('has saved items');
 
-  for (let i = 0; i < pages.length; i += 1) {
-    const currentUrl = pages[i];
+    for (let j = 0; j < savedItems.length; j += 1) {
+      const item = savedItems[j];
+      const { category, genre } = item;
 
-    /**
-       * Go to list.
-       */
-    await page.goto(currentUrl);
+      const result = await downloadItem({
+        context, item, category, genre,
+      });
 
-    const genreFull = await getTextOfElement({ page, query: '.section-title' });
-    const genre = genreFull.replace('Free ', '').replace(' Drum Music Loops & Samples', '');
-
-    const categorySelect = await page.locator('select[name="cid"]');
-
-    categorySelect.waitFor({ state: 'visible' });
-
-    const categorySelectValue = await page.$eval('select[name="cid"]', (sel) => sel.value);
-    const category = await getTextOfElement({ page: categorySelect, query: `option[value="${categorySelectValue}"]` });
-
-    console.log({
-      genre, category,
-    });
-
-    const items = await page.locator('.jp-audio.jp-state-looped');
-
-    try {
-      await items.first().waitFor({ state: 'visible', timeout: 3000 });
-    } catch (error) {
-      console.log('no items were found');
+      if (result === 'error') {
+        console.log('hit limit');
+        savedItems = savedItems.slice(j);
+        writeFile(path.join(process.env.TRIAGE_PATH, '..', 'failedItems.json'), savedItems);
+        return;
+      }
     }
 
-    const numberOfItems = await items.count();
+    writeFile(path.join(process.env.TRIAGE_PATH, '..', 'failedItems.json'), []);
+  } else {
+    const res = await downloadFromPages({ page, context });
 
-    console.log({ numberOfItems });
+    console.log({ res: res.hasHitLimit, si: res.storedItems.length });
 
-    const itemDataArray = await getItemDataArray(items);
-
-    console.log({ itemDataArray });
-
-    for (let j = 0; j < itemDataArray.length; j += 1) {
-      const item = itemDataArray[j];
-
-      await downloadItem({ page, item, category, genre });
+    if (res.hasHitLimit) {
+      writeFile(path.join(process.env.TRIAGE_PATH, '..', 'failedItems.json'), res.storedItems);
     }
   }
 });
