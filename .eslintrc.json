@@ -11,5 +11,9 @@
         "ecmaVersion": 13
     },
     "rules": {
-    }
+        "import/extensions": "off",
+        "no-console": "off",
+        "no-await-in-loop": "off"
+    },
+    "ignorePatterns": ["**/playwright-helpers/*"]
 }

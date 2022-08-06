@@ -1,11 +1,14 @@
 {
   "name": "looperman-fetcher",
   "version": "1.0.0",
-  "description": "selenium script for searching and downloading files from looperman",
+  "description": "playwright script for searching and downloading files from looperman",
   "main": "index.js",
   "scripts": {
     "start": "node ./src/index.js",
     "lint": "eslint --fix",
+    "fetch": "npx playwright test --headed",
+    "playwright:init": "npx playwright install",
+    "playwright:codegen": "npx playwright codegen https://www.looperman.com/loops/detail/300169/0x97476064-free-165bpm-industrial-drum-loop",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -19,10 +22,10 @@
   },
   "homepage": "https://github.com/Ricardo-Silva91/looperman-fetcher#readme",
   "dependencies": {
-    "dotenv": "^10.0.0",
-    "selenium-webdriver": "^4.0.0"
+    "dotenv": "^10.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.23.1",
     "eslint": "^8.2.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-google": "^0.14.0",
