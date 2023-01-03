@@ -14,7 +14,7 @@ test('basic test', async ({ page, context }) => {
 
   const cookiePolicyAgreeButons = await page.locator('text=AGREE');
 
-  await cookiePolicyAgreeButons.first().waitFor({ state: 'visible', timeout: 1000 });
+  await cookiePolicyAgreeButons.first().waitFor({ state: 'visible', timeout: 4000 });
 
   const numberOfCookiePolicyAgreeButons = await cookiePolicyAgreeButons.count();
 

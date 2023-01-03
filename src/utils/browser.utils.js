@@ -10,7 +10,7 @@ const getItemDataArray = async (items, { category, genre }) => {
     const item = await items.nth(i);
     const title = await getTextOfElement({ page: item, query: '.player-title' });
     const author = await getTextOfElement({ page: item, query: '.icon-small.icon-user' });
-    const href = await item.locator('.player-title').getAttribute('href');
+    const href = await item.locator('.player-title').first().getAttribute('href');
     const id = href.replace('https://www.looperman.com/loops/detail/', '').split('/')[0];
 
     const filename = `${`${id}-${author}-${title}`.replace(/[^a-z0-9]/gi, '_').toLowerCase().slice(0, 100)}.wav`;
@@ -124,7 +124,7 @@ const downloadFromPages = async ({ page, context }) => {
 
       storedItems = [...storedItems, ...itemDataArray];
     } catch (error) {
-      console.log('no items were found');
+      console.log('no items were found', { error });
     }
   }
 
