@@ -77,6 +77,80 @@ const downloadItem = async ({
   }
 };
 
+const getItemsInPage = async (page) => {
+  const genreSelect = await page.locator('select[name="gid"]');
+
+  await genreSelect.waitFor({ state: 'visible' });
+
+  const genreSelectValue = await page.$eval('select[name="gid"]', (sel) => sel.value);
+  const genre = await getTextOfElement({ page: genreSelect, query: `option[value="${genreSelectValue}"]` });
+
+  const categorySelect = await page.locator('select[name="cid"]');
+
+  await categorySelect.waitFor({ state: 'visible' });
+
+  const categorySelectValue = await page.$eval('select[name="cid"]', (sel) => sel.value);
+  const category = await getTextOfElement({ page: categorySelect, query: `option[value="${categorySelectValue}"]` });
+
+  console.log({
+    genre, category,
+  });
+
+  const items = await page.locator('.jp-audio.jp-state-looped');
+
+  return ({
+    items,
+    genre,
+    category,
+  });
+};
+
+const getRandomItems = async (page) => {
+  let noItemsFound = true;
+  let itemDataArray = [];
+
+  while (noItemsFound) {
+    const genreSelect = await page.locator('select[name="gid"]');
+    const genreSelectOptions = await genreSelect.locator('option');
+    const categorySelect = await page.locator('select[name="cid"]');
+    const categorySelectOptions = await categorySelect.locator('option');
+    const categorySelectOptionsCount = await categorySelectOptions.count();
+
+    const categoryToPickIndex = Math.floor(Math.random() * categorySelectOptionsCount) || 1;
+    const categoryToPick = await genreSelectOptions.nth(categoryToPickIndex);
+    const genreToPickIndex = Math.floor(Math.random() * categorySelectOptionsCount) || 1;
+    const genreToPick = await genreSelectOptions.nth(genreToPickIndex);
+
+    console.log('random', {
+      categoryToPick: await categoryToPick.innerText(),
+      genreToPick: await genreToPick.innerText(),
+    });
+
+    await genreSelect.selectOption({ index: genreToPickIndex });
+    await categorySelect.selectOption({ index: categoryToPickIndex });
+
+    const searchButton = await page.locator('#search');
+    await searchButton.click();
+
+    const { items, genre, category } = await getItemsInPage(page);
+    const itemsCount = await items.count();
+
+    console.log({ itemsCount });
+
+    noItemsFound = itemsCount === 0;
+
+    if (!noItemsFound) {
+      try {
+        itemDataArray = await getItemDataArray(items, { category, genre });
+      } catch (error) {
+        console.log('no items were found', { error });
+      }
+    }
+  }
+
+  return itemDataArray;
+};
+
 const downloadFromPages = async ({ page, context }) => {
   const pages = process.env.PAGE_URLS.split(',').filter((pageString) => pageString);
 
@@ -90,28 +164,11 @@ const downloadFromPages = async ({ page, context }) => {
 
     await page.goto(currentUrl);
 
-    // const genreFull = await getTextOfElement({ page, query: '.section-title' });
-    // const genre = genreFull.replace('Free ', '').replace(' Drum Music Loops & Samples', '');
-
-    const genreSelect = await page.locator('select[name="gid"]');
-
-    await genreSelect.waitFor({ state: 'visible' });
-
-    const genreSelectValue = await page.$eval('select[name="gid"]', (sel) => sel.value);
-    const genre = await getTextOfElement({ page: genreSelect, query: `option[value="${genreSelectValue}"]` });
-
-    const categorySelect = await page.locator('select[name="cid"]');
-
-    await categorySelect.waitFor({ state: 'visible' });
-
-    const categorySelectValue = await page.$eval('select[name="cid"]', (sel) => sel.value);
-    const category = await getTextOfElement({ page: categorySelect, query: `option[value="${categorySelectValue}"]` });
+    const { items, genre, category } = await getItemsInPage(page);
 
     console.log({
       genre, category,
     });
-
-    const items = await page.locator('.jp-audio.jp-state-looped');
 
     try {
       await items.first().waitFor({ state: 'visible', timeout: 3000 });
@@ -127,6 +184,10 @@ const downloadFromPages = async ({ page, context }) => {
       console.log('no items were found', { error });
     }
   }
+
+  // get random items
+  const randomItems = await getRandomItems(page);
+  storedItems = [...storedItems, ...randomItems];
 
   for (let j = 0; j < storedItems.length; j += 1) {
     const item = storedItems[j];
