@@ -43,7 +43,7 @@ test('basic test', async ({ page, context }) => {
 
     const checkedBox = await page.frameLocator('iframe[role="presentation"]').locator('span[role="checkbox"].recaptcha-checkbox-checked');
 
-    await checkedBox.waitFor({ state: 'visible', timeout: 10000 });
+    await checkedBox.waitFor({ state: 'visible', timeout: 60000 });
 
     // Check input[name="user_disclaimer"]
     await page.locator('input[name="user_disclaimer"]').check();
